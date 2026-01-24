@@ -1,511 +1,398 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Thinking Types in Standard Behavioral Index</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
-      --ui-font-size: 20px;   /* control overall UI font size here */
-      --tab-border: 2px;
-      --radius: 8px;
-    }
-
-    /* Base */
     body {
-      font-family: "Times New Roman", Times, serif;
+      font-family: Times New Roman, sans-serif;
       background: #f4f4f4;
       margin: 0;
       padding: 20px;
-      color: #111;
-      line-height: 1.45;
-      font-size: var(--ui-font-size);
     }
-
-    /* Image container – responsive, keeps aspect ratio */
     .container {
       position: relative;
-      width: min(100%, 820px); /* expands up to 820px, scales down on mobile */
-      margin: 0 auto;
-      aspect-ratio: 820 / 820; /* adjust if your image is not square */
-      /* If your image is not square, set actual ratio e.g., 1200/800 */
-      background: #eaeaea;
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      width: 400px;
+      margin: auto;
     }
-
-    .container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;     /* fills the container without distortion */
-      display: block;
-    }
-
-    /* Clickable hotspots (use % so they stay aligned as image scales) */
     .key-part {
       position: absolute;
       cursor: pointer;
       border-radius: 50%;
       transition: transform 0.2s;
-      outline: none;
-      /* Add a tiny invisible hit area outline for accessibility (visible on focus) */
     }
-    .key-part:hover { transform: scale(1.06); }
-    .key-part:focus-visible {
-      box-shadow: 0 0 0 3px #2563ebaa;
+    .key-part:hover {
+      transform: scale(1.1);
     }
-
-    /* Tooltip */
     .tooltip {
-      position: fixed; /* make positioning stable on scroll */
+      position: absolute;
       background: #333;
       color: #fff;
       padding: 6px 10px;
       border-radius: 4px;
-      font-size: calc(var(--ui-font-size) * 0.9);
+      font-size: 14px;
       display: none;
       white-space: nowrap;
-      pointer-events: none;
-      z-index: 1001;
-      transform: translate(-50%, -120%);
     }
-
-    /* Modal + overlay */
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1000;
+      width: 350px;
+    }
+    .modal h2 {
+      margin-top: 0;
+    }
     .overlay {
       position: fixed;
-      inset: 0;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       display: none;
       z-index: 999;
     }
-    .modal {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 16px;
-      border-radius: var(--radius);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
-      display: none;
-      z-index: 1000;
-      width: min(95vw, 900px);
-      max-height: 85vh;
-      overflow: hidden; /* keep header fixed, body scrolls */
-    }
-    .modal h2 {
-      margin: 0 0 10px 0;
-      font-size: calc(var(--ui-font-size) * 1.2);
-    }
-
-    .modal__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 8px;
-    }
-    .modal__close {
-      appearance: none;
-      border: 1px solid #ccc;
-      background: #f3f3f3;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: calc(var(--ui-font-size) * 0.9);
-    }
-    .modal__body {
-      padding-top: 12px;
-      overflow: auto;
-      max-height: calc(85vh - 80px);
-    }
-
-    /* Tabs */
     .tabs {
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin: 6px 0 10px 0;
+      margin-bottom: 10px;
       border-bottom: 1px solid #ccc;
+      flex-wrap: wrap;
+      gap: 4px;
     }
     .tab {
       padding: 6px 10px;
       cursor: pointer;
-      border: var(--tab-border) solid #ccc;
+      border: 1px solid #ccc;
       border-bottom: none;
       background: #eee;
       border-radius: 6px 6px 0 0;
-      font-size: var(--ui-font-size);
-      user-select: none;
+      font-size: 12px;
     }
     .tab.active {
-      background: #fff;
+      background: white;
       font-weight: bold;
-      border-color: #bbb;
     }
-
     .tab-content {
       display: none;
-      font-size: var(--ui-font-size);
+      max-height: 260px;
+      overflow-y: auto;
+      font-size: 13px;
     }
     .tab-content.active {
       display: block;
     }
     .tab-content p {
-      margin: 6px 0;
-    }
-
-    /* Small screens: reduce font slightly to keep things tidy */
-    @media (max-width: 480px) {
-      :root { --ui-font-size: 18px; }
+      margin: 4px 0;
     }
   </style>
 </head>
 <body>
 
-  <div class="container" aria-label="Standard Behavioral Index graphic">
-    <img src="tsdex.png" alt="Standard Behavioral Index" />
+<div class="container">
+  <img src="tsdex.png" alt="Standard Behavioral index" style="width:100%;">
 
-    <!-- Example hotspots:
-         Use percentage-based top/left and size (width/height as % of container).
-         Tweak these to align with meaningful regions on your image.
-    -->
-
-    <!-- Center S-shape (opens Components tab) -->
-    <button class="key-part"
-            style="top: 45%; left: 50%; width: 16%; height: 16%; transform: translate(-50%, -50%);"
-            data-title="Components"
-            data-target="impulse"
-            aria-label="Open Components">
-    </button>
-
-    <!-- Left region (opens Horizontal) -->
-    <button class="key-part"
-            style="top: 60%; left: 22%; width: 14%; height: 14%; transform: translate(-50%, -50%);"
-            data-title="Horizontal"
-            data-target="horizontal"
-            aria-label="Open Horizontal">
-    </button>
-
-    <!-- Right region (opens Orthogonal) -->
-    <button class="key-part"
-            style="top: 35%; left: 78%; width: 14%; height: 14%; transform: translate(-50%, -50%);"
-            data-title="Orthogonal"
-            data-target="orthogonal"
-            aria-label="Open Orthogonal">
-    </button>
-
-    <!-- Top region (opens Vertical) -->
-    <button class="key-part"
-            style="top: 12%; left: 50%; width: 12%; height: 12%; transform: translate(-50%, -50%);"
-            data-title="Vertical"
-            data-target="vertical"
-            aria-label="Open Vertical">
-    </button>
-
-    <!-- Bottom region (opens Cyclic) -->
-    <button class="key-part"
-            style="top: 88%; left: 50%; width: 12%; height: 12%; transform: translate(-50%, -50%);"
-            data-title="Cyclic"
-            data-target="cyclic"
-            aria-label="Open Cyclic">
-    </button>
-
-    <!-- Extra region (opens Complex) -->
-    <button class="key-part"
-            style="top: 80%; left: 80%; width: 12%; height: 12%; transform: translate(-50%, -50%);"
-            data-title="Complex"
-            data-target="complex"
-            aria-label="Open Complex">
-    </button>
-
-    <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"></div>
+  <!-- S-shaped center (Impulse Components & full system access) -->
+  <div class="key-part" style="top: 80px; left: 140px; width: 120px; height: 120px;" 
+       data-title="Behavioral Index" 
+       data-description="">
   </div>
 
-  <div class="overlay" id="overlay" aria-hidden="true"></div>
+  <div class="tooltip" id="tooltip"></div>
+</div>
 
-  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal__header">
-      <h2 id="modal-title">Standard Behavioral Index</h2>
-      <button class="modal__close" id="close-modal" aria-label="Close dialog">Close</button>
-    </div>
+<div class="overlay" id="overlay"></div>
 
-    <div class="modal__body">
-      <div class="tabs" role="tablist" aria-label="Sections">
-        <div class="tab active" role="tab" aria-selected="true" data-tab="impulse" tabindex="0">Components</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="horizontal" tabindex="-1">Horizontal</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="orthogonal" tabindex="-1">Orthogonal</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="absolute" tabindex="-1">Absolute</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="vertical" tabindex="-1">Vertical</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="cyclic" tabindex="-1">Cyclic</div>
-        <div class="tab" role="tab" aria-selected="false" data-tab="complex" tabindex="-1">Complex</div>
-      </div>
+<div class="modal" id="modal">
+  <h2 id="modal-title">Standard Behavioral Index</h2>
 
-      <!-- PANELS -->
-      <div id="impulse" class="tab-content active">
-        <p><strong>Impulse</strong> – Begin communication with environment (Energy Ratio: 0.5 units)</p>
-        <p><strong>Subtraction</strong> – Compare information from environment (Energy Ratio: 1.5 units)</p>
-        <p><strong>Compression</strong> – Applying meaning to and storage of information from environment (Energy Ratio: -0.5 units)</p>
-        <hr>
-        <p><strong>Standard Process:</strong> Subtraction at 1.5 units of information</p>
-        <p><strong>Nonstandard Process:</strong> Any other amount of information</p>
-      </div>
-
-      <div id="horizontal" class="tab-content">
-        <p><strong>1st Characteristic – One to self</strong></p>
-        <p>Standard: Silent Identification</p>
-        <p>Nonstandard: Dissociation</p>
-        <p>Disease: Schizophrenia</p>
-        <hr>
-        <p><strong>2nd Characteristic – One to self</strong></p>
-        <p>Standard: Silent Interaction</p>
-        <p>Nonstandard: Intimacy Dysfunction</p>
-        <p>Disease: Physical Bipolar</p>
-        <hr>
-        <p><strong>3rd Characteristic – One to self</strong></p>
-        <p>Standard: Silent Orientation</p>
-        <p>Nonstandard: Compensatory Behavior</p>
-        <p>Disease: OCD/ADD/ADHD, Physical Depression</p>
-        <hr>
-        <p><strong>4th Characteristic – One-on-one</strong></p>
-        <p>Standard: Intimate Interaction</p>
-        <p>Nonstandard: Reversion</p>
-        <p>Disease: Anxiety, Relational Depression</p>
-        <hr>
-        <p><strong>5th Characteristic – One-on-one</strong></p>
-        <p>Standard: Intimate Identity</p>
-        <p>Nonstandard: Reversion, Deceit, Deferral</p>
-        <p>Disease: Personality Disorder, PTSD, Anxiety</p>
-        <hr>
-        <p><strong>6th Characteristic – One-on-one</strong></p>
-        <p>Standard: Intimate Orientation</p>
-        <p>Nonstandard: Recursion</p>
-        <p>Disease: Autism (Positive or Negative)</p>
-        <hr>
-        <p><strong>7th Characteristic– One to many</strong></p>
-        <p>Standard: Social Interaction</p>
-        <p>Nonstandard: Social Intimacy</p>
-        <p>Disease: Social Intimacy (Social Bipolar)</p>
-        <hr>
-        <p><strong>8th Characteristic – One to many</strong></p>
-        <p>Standard: Social Orientation</p>
-        <p>Nonstandard: Addiction</p>
-        <p>Disease: Addiction</p>
-        <hr>
-        <p><strong>9th Characteristic – One to many</strong></p>
-        <p>Standard: Social Identity</p>
-        <p>Nonstandard: Depersonalization</p>
-        <p>Disease: Social Identity Disorder</p>
-      </div>
-
-      <div id="orthogonal" class="tab-content">
-        <p><strong>10th – Shared Self</strong></p>
-        <p>Standard: Shared Silent Identity</p>
-        <p>Composition: (9+1)</p>
-        <hr>
-        <p><strong>11th – Shared Self</strong></p>
-        <p>Standard: Shared Silent Interaction</p>
-        <p>Composition: (9+2)</p>
-        <hr>
-        <p><strong>12th – Shared Self</strong></p>
-        <p>Standard: Shared Silent Orientation</p>
-        <p>Composition: (9+3)</p>
-        <hr>
-        <p><strong>13th – Indirect One-on-one</strong></p>
-        <p>Standard: Shared Intimate Interaction</p>
-        <p>Composition: (9+4)</p>
-        <hr>
-        <p><strong>14th – Indirect One-on-one</strong></p>
-        <p>Standard: Shared Intimate Identity</p>
-        <p>Composition: (9+5)</p>
-        <hr>
-        <p><strong>15th – Indirect One-on-one</strong></p>
-        <p>Standard: Shared Intimate Orientation</p>
-        <p>Composition: (9+6)</p>
-        <hr>
-        <p><strong>16th – Indirect Social</strong></p>
-        <p>Standard: Shared Social Interaction</p>
-        <p>Composition: (9+7)</p>
-        <hr>
-        <p><strong>17th – Indirect Social</strong></p>
-        <p>Standard: Shared Social Orientation</p>
-        <p>Composition: (9+8)</p>
-        <hr>
-        <p><strong>Aversive Party</strong></p>
-        <p>Standard: Aversion (9+)</p>
-        <p>Nonstandard: Forced Identity Disorder</p>
-        <hr>
-        <p><strong>Subversive Party</strong></p>
-        <p>Standard: Subversion (+1)</p>
-        <p>Nonstandard: Subversive Identity Disorder</p>
-      </div>
-
-      <div id="absolute" class="tab-content">
-        <p><strong>25th Characteristic – Supersocial (Group)</strong></p>
-        <p>Standard: Three-Party Shared Intimacy</p>
-        <p>Nonstandard: Three-Party Shared Intimacy</p>
-        <hr>
-        <p><strong>27th Characteristic – Supersocial (Group)</strong></p>
-        <p>Standard: Supersocial Identity</p>
-        <p>Nonstandard: Personification / Depersonification</p>
-        <hr>
-        <p><strong>54th Characteristic – Supersocial (Group)</strong></p>
-        <p>Standard: Supersocial Interaction</p>
-        <p>Nonstandard: Conditional Relationship / Disinterest</p>
-        <hr>
-        <p><strong>117th Characteristic – Supersocial (Group)</strong></p>
-        <p>Standard: Supersocial Orientation</p>
-        <p>Nonstandard: Gapping</p>
-        <hr>
-        <p><strong>High Energy</strong></p>
-        <p>Standard: Grouping (+)</p>
-        <p>Modifier: Directive (+1)</p>
-        <p>Nonstandard Modifier: Pseudo-directive</p>
-        <hr>
-        <p><strong>Low Energy</strong></p>
-        <p>Standard: Sorting (-)</p>
-        <p>Modifier: Deferral (-1)</p>
-        <p>Nonstandard Modifier: Pseudo-deferral</p>
-      </div>
-
-      <div id="vertical" class="tab-content">
-        <p><strong>Rolling</strong></p>
-        <p>Range: -180 to -117</p>
-        <p>Direction: Positive</p>
-        <p>Standard Components: Pseudo-additive Impulse</p>
-        <hr>
-        <p><strong>Metaphysical</strong></p>
-        <p>Range: -180 to -185</p>
-        <p>Direction: Negative</p>
-        <p>Standard Components: Impulse, Subtraction, Compression</p>
-        <hr>
-        <p><strong>Impulsive</strong></p>
-        <p>Range: -185 to -191</p>
-        <p>Direction: Negative</p>
-        <p>Standard Components: Impulse, Subtraction</p>
-        <hr>
-        <p><strong>Compulsive</strong></p>
-        <p>Range: -191 to -197</p>
-        <p>Direction: Negative</p>
-        <p>Standard Components: Impulse</p>
-        <hr>
-        <p><strong>Compulsive Impulse</strong></p>
-        <p>Range: -197 to -221</p>
-        <p>Direction: Negative</p>
-        <p>Standard Components: Complex</p>
-      </div>
-
-      <div id="cyclic" class="tab-content">
-        <p><strong>0th Level</strong></p>
-        <p>Associated Compressions: 0</p>
-        <p>Variables: None</p>
-        <p>Standard Type: None</p>
-        <p>Nonstandard Type: None</p>
-        <hr>
-        <p><strong>1st Level</strong></p>
-        <p>Standard Type: Circular</p>
-        <p>Associated Compressions: 1</p>
-        <p>Variables: x</p>
-        <p>Nonstandard Type: Disruption</p>
-        <hr>
-        <p><strong>2nd Level</strong></p>
-        <p>Standard Type: Ovular</p>
-        <p>Associated Compressions: 2 (1+1)</p>
-        <p>Variables: x2 or [(x1 * x2)]</p>
-        <p>Nonstandard Type: Derangement</p>
-        <hr>
-        <p><strong>3rd Level</strong></p>
-        <p>Standard Type: Elliptical</p>
-        <p>Associated Compressions: 3 (2+1)</p>
-        <p>Variables: x3 or [(x2 * x1)]</p>
-        <p>Nonstandard Type: Illness</p>
-        <hr>
-        <p><strong>4th Level</strong></p>
-        <p>Standard Type: Incongruent</p>
-        <p>Associated Compressions: 4 [(2+(1)+(1)]</p>
-        <p>Variables: x4 or [(x2)*(x1)*(x2)]</p>
-        <p>Nonstandard Type: Disease</p>
-      </div>
-
-      <div id="complex" class="tab-content">
-        <p><strong>1st Level – Zero Factor</strong></p>
-        <p>Factor: Zero</p>
-        <p>Number of Complexities: 1</p>
-        <p>Low-Energy Pattern(s): O</p>
-        <p>High-Energy Pattern(s): 1</p>
-        <hr>
-        <p><strong>2nd Level – Complex Identity</strong></p>
-        <p>Factor: First</p>
-        <p>Number of Complexities: 4</p>
-        <p>Low-Energy Pattern(s): OOOO, OO|OO, 0|0010</p>
-        <p>High-Energy Pattern(s): 1|OOO</p>
-        <hr>
-        <p><strong>3rd Level – Complex Interaction</strong></p>
-        <p>Factor: Second</p>
-        <p>Number of Complexities: 7</p>
-        <p>Low-Energy Pattern(s): OOOOOOO, OOOO|OOO, 00|000|00</p>
-        <p>High-Energy Pattern(s): 1|OOO|OOO</p>
-        <hr>
-        <p><strong>4th Level – Complex Orientation</strong></p>
-        <p>Factor: Third</p>
-        <p>Number of Complexities: 11</p>
-        <p>Low-Energy Pattern(s): OOOOOOOOOOO, OOOOOOO|OOOO, 1000|000|000 O, 1000 000000 O</p>
-        <p>High-Energy Pattern(s): 1000|000|00|00, 10001000|0000</p>
-        <hr>
-        <p><strong>5th Level – Complex Range</strong></p>
-        <p>Factor: Fourth</p>
-        <p>Number of Complexities: 14–17</p>
-        <p>Low-Energy Pattern(s): 200|000|000 vs 000|000|00</p>
-        <p>High-Energy Pattern(s): Many</p>
-        <hr>
-        <p><strong>6th Level – Complexly Complex Range</strong></p>
-        <p>Factor: Fifth</p>
-        <p>Number of Complexities: 19–22</p>
-        <p>Low-Energy Pattern(s): 200|000|000 vs 10|000|0010 from OOOO</p>
-        <p>High-Energy Pattern(s): Many</p>
-      </div>
-    </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="impulse">Impulse</div>
+    <div class="tab" data-tab="horizontal">Horizontal</div>
+    <div class="tab" data-tab="orthogonal">Orthogonal</div>
+    <div class="tab" data-tab="absolute">Absolute</div>
+    <div class="tab" data-tab="vertical">Vertical</div>
+    <div class="tab" data-tab="cyclic">Cyclic</div>
+    <div class="tab" data-tab="complex">Complex</div>
   </div>
 
-  <script>
-    const parts = document.querySelectorAll('.key-part');
-    const tooltip = document.getElementById('tooltip');
-    const modal = document.getElementById('modal');
-    const overlay = document.getElementById('overlay');
-    const closeBtn = document.getElementById('close-modal');
+  <!-- Components of Impulse -->
+  <div id="impulse" class="tab-content active">
+    <p><strong>Impulse</strong> – Begin communication with environment (Energy Ratio: 0.5 units)</p>
+    <p><strong>Subtraction</strong> – Compare information from environment (Energy Ratio: 1.5 units)</p>
+    <p><strong>Compression</strong> – Applying meaning to and storage of information from environment (Energy Ratio: -0.5 units)</p>
+    <hr>
+    <p><strong>Standard Process:</strong> Subtraction at 1.5 units of information</p>
+    <p><strong>Nonstandard Process:</strong> Any other amount of information</p>
+  </div>
 
-    const tabs = Array.from(document.querySelectorAll('.tab'));
-    const contents = Array.from(document.querySelectorAll('.tab-content'));
+  <!-- Horizontal Thinking -->
+  <div id="horizontal" class="tab-content">
+    <p><strong>1st – One to self</strong></p>
+    <p>Standard: Silent Identification</p>
+    <p>Nonstandard: Dissociation</p>
+    <p>Disease: Schizophrenia</p>
+    <hr>
+    <p><strong>2nd – One to self</strong></p>
+    <p>Standard: Silent Interaction</p>
+    <p>Nonstandard: Intimacy Dysfunction</p>
+    <p>Disease: Physical Bipolar</p>
+    <hr>
+    <p><strong>3rd – One to self</strong></p>
+    <p>Standard: Silent Orientation</p>
+    <p>Nonstandard: Compensatory Behavior</p>
+    <p>Disease: OCD/ADD/ADHD, Depression</p>
+    <hr>
+    <p><strong>4th – One-on-one</strong></p>
+    <p>Standard: Intimate Interaction</p>
+    <p>Nonstandard: Reversion</p>
+    <p>Disease: Anxiety, Depression</p>
+    <hr>
+    <p><strong>5th – One-on-one</strong></p>
+    <p>Standard: Intimate Identity</p>
+    <p>Nonstandard: Reversion, Deceit, Deferral</p>
+    <p>Disease: Personality Disorder, PTSD, Anxiety</p>
+    <hr>
+    <p><strong>6th – One-on-one</strong></p>
+    <p>Standard: Intimate Orientation</p>
+    <p>Nonstandard: Recursion</p>
+    <p>Disease: Autism</p>
+    <hr>
+    <p><strong>7th – One to many</strong></p>
+    <p>Standard: Social Interaction</p>
+    <p>Nonstandard: Social Intimacy</p>
+    <p>Disease: Social Intimacy (Social Bipolar)</p>
+    <hr>
+    <p><strong>8th – One to many</strong></p>
+    <p>Standard: Social Orientation</p>
+    <p>Nonstandard: Addiction</p>
+    <p>Disease: Addiction</p>
+    <hr>
+    <p><strong>9th – One to many</strong></p>
+    <p>Standard: Social Identity</p>
+    <p>Nonstandard: Depersonalization</p>
+    <p>Disease: Social Identity Disorder</p>
+  </div>
 
-    // Helpers
-    function openModal() {
+  <!-- Orthogonal Thinking -->
+  <div id="orthogonal" class="tab-content">
+    <p><strong>10th – Shared Self</strong></p>
+    <p>Standard: Shared Silent Identity</p>
+    <p>Composition: (9+1)</p>
+    <hr>
+    <p><strong>11th – Shared Self</strong></p>
+    <p>Standard: Shared Silent Interaction</p>
+    <p>Composition: (9+2)</p>
+    <hr>
+    <p><strong>12th – Shared Self</strong></p>
+    <p>Standard: Shared Silent Orientation</p>
+    <p>Composition: (9+3)</p>
+    <hr>
+    <p><strong>13th – Indirect One-on-one</strong></p>
+    <p>Standard: Shared Intimate Interaction</p>
+    <p>Composition: (9+4)</p>
+    <hr>
+    <p><strong>14th – Indirect One-on-one</strong></p>
+    <p>Standard: Shared Intimate Identity</p>
+    <p>Composition: (9+5)</p>
+    <hr>
+    <p><strong>15th – Indirect One-on-one</strong></p>
+    <p>Standard: Shared Intimate Orientation</p>
+    <p>Composition: (9+6)</p>
+    <hr>
+    <p><strong>16th – Indirect Social</strong></p>
+    <p>Standard: Shared Social Interaction</p>
+    <p>Composition: (9+7)</p>
+    <hr>
+    <p><strong>17th – Indirect Social</strong></p>
+    <p>Standard: Shared Social Orientation</p>
+    <p>Composition: (9+8)</p>
+    <hr>
+    <p><strong>Aversive Party</strong></p>
+    <p>Standard: Aversion (9+)</p>
+    <p>Nonstandard: Forced Identity Disorder</p>
+    <hr>
+    <p><strong>Subversive Party</strong></p>
+    <p>Standard: Subversion (+1)</p>
+    <p>Nonstandard: Subversive Identity Disorder</p>
+  </div>
+
+  <!-- Absolute Thinking -->
+  <div id="absolute" class="tab-content">
+    <p><strong>25th – Supersocial (Group)</strong></p>
+    <p>Standard: Three-Party Shared Intimacy</p>
+    <p>Nonstandard: Three-Party Shared Intimacy</p>
+    <hr>
+    <p><strong>27th – Supersocial (Group)</strong></p>
+    <p>Standard: Supersocial Identity</p>
+    <p>Nonstandard: Personification / Depersonification</p>
+    <hr>
+    <p><strong>54th – Supersocial (Group)</strong></p>
+    <p>Standard: Supersocial Interaction</p>
+    <p>Nonstandard: Conditional Relationship / Disinterest</p>
+    <hr>
+    <p><strong>117th – Supersocial (Group)</strong></p>
+    <p>Standard: Supersocial Orientation</p>
+    <p>Nonstandard: Gapping</p>
+    <hr>
+    <p><strong>High Energy</strong></p>
+    <p>Standard: Grouping (+)</p>
+    <p>Modifier: Directive (+1)</p>
+    <p>Nonstandard Modifier: Pseudo-directive</p>
+    <hr>
+    <p><strong>Low Energy</strong></p>
+    <p>Standard: Sorting (-)</p>
+    <p>Modifier: Deferral (-1)</p>
+    <p>Nonstandard Modifier: Pseudo-deferral</p>
+  </div>
+
+  <!-- Vertical Thinking -->
+  <div id="vertical" class="tab-content">
+    <p><strong>Rolling</strong></p>
+    <p>Range: -180 to -117</p>
+    <p>Direction: Positive</p>
+    <p>Standard Components: Pseudo-additive Impulse</p>
+    <hr>
+    <p><strong>Metaphysical</strong></p>
+    <p>Range: -180 to -185</p>
+    <p>Direction: Negative</p>
+    <p>Standard Components: Impulse, Subtraction, Compression</p>
+    <hr>
+    <p><strong>Impulsive</strong></p>
+    <p>Range: -185 to -191</p>
+    <p>Direction: Negative</p>
+    <p>Standard Components: Impulse, Subtraction</p>
+    <hr>
+    <p><strong>Compulsive</strong></p>
+    <p>Range: -191 to -197</p>
+    <p>Direction: Negative</p>
+    <p>Standard Components: Impulse</p>
+    <hr>
+    <p><strong>Compulsive Impulse</strong></p>
+    <p>Range: -197 to -221</p>
+    <p>Direction: Negative</p>
+    <p>Standard Components: Complex</p>
+  </div>
+
+  <!-- Cyclic Thinking -->
+  <div id="cyclic" class="tab-content">
+    <p><strong>0th Level</strong></p>
+    <p>Associated Compressions: 0</p>
+    <p>Variables: None</p>
+    <p>Standard Type: None</p>
+    <p>Nonstandard Type: None</p>
+    <hr>
+    <p><strong>1st Level</strong></p>
+    <p>Associated Compressions: 1</p>
+    <p>Variables: x</p>
+    <p>Standard Type: Circular</p>
+    <p>Nonstandard Type: Disruption</p>
+    <hr>
+    <p><strong>2nd Level</strong></p>
+    <p>Associated Compressions: 2 (1+1)</p>
+    <p>Variables: x2 or [(x1 * x2)]</p>
+    <p>Standard Type: Ovular</p>
+    <p>Nonstandard Type: Derangement</p>
+    <hr>
+    <p><strong>3rd Level</strong></p>
+    <p>Associated Compressions: 3 (2+1)</p>
+    <p>Variables: x3 or [(x2 * x1)]</p>
+    <p>Standard Type: Elliptical</p>
+    <p>Nonstandard Type: Illness</p>
+    <hr>
+    <p><strong>4th Level</strong></p>
+    <p>Associated Compressions: 4 [(2+(1)+(1)]</p>
+    <p>Variables: x4 or [(x2)*(x1)*(x2)]</p>
+    <p>Standard Type: Incongruent</p>
+    <p>Nonstandard Type: Disease</p>
+  </div>
+
+  <!-- Complex Communication -->
+  <div id="complex" class="tab-content">
+    <p><strong>1st Level – Zero Factor</strong></p>
+    <p>Factor: Zero</p>
+    <p>Number of Complexities: 1</p>
+    <p>Low-Energy Pattern(s): O</p>
+    <p>High-Energy Pattern(s): 1</p>
+    <hr>
+    <p><strong>2nd Level – Complex Identity</strong></p>
+    <p>Factor: First</p>
+    <p>Number of Complexities: 4</p>
+    <p>Low-Energy Pattern(s): OOOO, OO|OO, 0|0010</p>
+    <p>High-Energy Pattern(s): 1|OOO</p>
+    <hr>
+    <p><strong>3rd Level – Complex Interaction</strong></p>
+    <p>Factor: Second</p>
+    <p>Number of Complexities: 7</p>
+    <p>Low-Energy Pattern(s): OOOOOOO, OOOO|OOO, 00|000|00</p>
+    <p>High-Energy Pattern(s): 1|OOO|OOO</p>
+    <hr>
+    <p><strong>4th Level – Complex Orientation</strong></p>
+    <p>Factor: Third</p>
+    <p>Number of Complexities: 11</p>
+    <p>Low-Energy Pattern(s): OOOOOOOOOOO, OOOOOOO|OOOO, 1000|000|000 O, 1000 000000 O</p>
+    <p>High-Energy Pattern(s): 1000|000|00|00, 10001000|0000</p>
+    <hr>
+    <p><strong>5th Level – Complex Range</strong></p>
+    <p>Factor: Fourth</p>
+    <p>Number of Complexities: 14–17</p>
+    <p>Low-Energy Pattern(s): 200|000|000 vs 000|000|00</p>
+    <p>High-Energy Pattern(s): Many</p>
+    <hr>
+    <p><strong>6th Level – Complexly Complex Range</strong></p>
+    <p>Factor: Fifth</p>
+    <p>Number of Complexities: 19–22</p>
+    <p>Low-Energy Pattern(s): 200|000|000 vs 10|000|0010 from OOOO</p>
+    <p>High-Energy Pattern(s): Many</p>
+  </div>
+</div>
+
+<script>
+  const parts = document.querySelectorAll('.key-part');
+  const tooltip = document.getElementById('tooltip');
+  const modal = document.getElementById('modal');
+  const overlay = document.getElementById('overlay');
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+
+  parts.forEach(part => {
+    part.addEventListener('mouseover', e => {
+      tooltip.textContent = part.dataset.title;
+      tooltip.style.left = e.pageX + 'px';
+      tooltip.style.top = e.pageY - 30 + 'px';
+      tooltip.style.display = 'block';
+    });
+
+    part.addEventListener('mouseout', () => {
+      tooltip.style.display = 'none';
+    });
+
+    part.addEventListener('click', () => {
       modal.style.display = 'block';
       overlay.style.display = 'block';
-      overlay.setAttribute('aria-hidden', 'false');
-    }
-    function closeModal() {
-      modal.style.display = 'none';
-      overlay.style.display = 'none';
-      overlay.setAttribute('aria-hidden', 'true');
-    }
-    function activateTab(tabId) {
-      tabs.forEach(t => {
-        const isActive = t.dataset.tab === tabId;
-        t.classList.toggle('active', isActive);
-        t.setAttribute('aria-selected', String(isActive));
-        t.setAttribute('tabindex', isActive ? '0' : '-1');
-      });
-      contents.forEach(c => c.classList.toggle('active', c.id === tabId));
-      // Move focus to active tab for accessibility
-      const active = tabs.find(t => t.dataset.tab === tabId);
-      if (active) active.focus();
-    }
+    });
+  });
 
-    // Hotspots: show tooltip, open modal, go to correct tab
-    parts.forEach(part => {
-      // Tooltip
-      part.addEventListener('pointerenter', (e) => {
-        tooltip.textContent = part.dataset.title || '';
-        tooltip.style.left = e.clientX + 'px';
+  overlay.addEventListener('click', () => {
+    modal.style.display = 'none';
+    overlay.style.display = 'none';
+  });
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
